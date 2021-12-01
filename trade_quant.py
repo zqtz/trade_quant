@@ -121,7 +121,7 @@ class AstockTrading(object):
                     self.volume = volume
 #                当前价格为买一,为立即交,买入价格加0.01为卖一,可马上成交
                     self.buy(self._Close[0]+0.01,volume)
-#             当当前订单的长度为0是,证明还没有开仓,则考虑达到设定的条件进行卖出(设定的条件为价格小于ma20*1.07)   
+#             当当前订单的长度为1时,证明已开仓,则考虑达到设定的条件进行卖出(设定的条件为价格小于ma20*1.07)   
         elif 1 == len(self._current_orders):
 #         如果当前价格大于ma20*1.07则卖出
             if self._Close[0] > self._ma20*1.07:
@@ -197,6 +197,6 @@ if __name__ == '__main__':
     loss_late = loss_orders/len(orders)#计算输的概率
     print('胜的概率为:'+str(profit_late),'输的概率为:'+str(loss_late))
     print('利润为:'+str(profit))
-    orders_df = pd.DataFrame(orders).T#装置数据让matplotlib处理
+    orders_df = pd.DataFrame(orders).T#转置数据让matplotlib处理
     plt.bar(orders.keys(),orders_df.loc[:,'pnl'])
     plt.show()#
