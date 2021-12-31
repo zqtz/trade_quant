@@ -6,56 +6,32 @@ import numpy as np
 from dateutil import parser
 import os
 import matplotlib.pyplot as plt
+import efinance as ef
 
-# 该函数的作用为bar_generator_for_backtesting函数提供形成K线的数据
-# 该例子的储存个人地址为:
-# tickpath = D:\\代码\\爬虫项目\\spider_one_year_1\\量化交易\\300014_ticks.csv
-# bar_path = 'D:\\代码\\爬虫项目\\spider_one_year_1\\量化交易\\300014_5m.csv'
-def get_ticks_for_backtesting(tick_path, bar_path):
-    # 判断tick_path是否存在,存在则利用read_csv进行数据的处理,为bar_generator_for_backtesting函数提供形成K线的数据
-    if os.path.exists(tick_path):#判断是否存在
-        # 存在即进行数据的处理
-        # 读取数据
-        ticks = pd.read_csv(
-            tick_path,
-            parse_dates = ['datetime'],
-            index_col = 'datetime'
-            )
-        tick_list = []
-#         处理数据形成tick数据
-        for index, row in ticks.iterrows():
-            tick_list.append((index, row[0]))
-        ticks = tick_list
-#         不存在即进行bar_path数据的处理
-    else:
-        bar_5m = pd.read_excel(bar_path)
-        ticks = []
-
-        for index, row in bar_5m.iterrows():
-            if row['open'] < 30:
-                step = 0.01
-            elif row['open'] < 60:
-                step = 0.03
-            elif row['open'] < 90:
-                step = 0.05
-            else:
-                step = 0.1
-#例如:np.arange(30.00, 30.11, 0.02)          
-#当step的步长大于0.01时,30.11则会不包含再tick数据里面,为让其包含在tick数据里面,需要 np.append(arr, row['high']),np.append(arr, row['low'])
-            arr = np.arange(row['open'], row['high'], step)
-            arr = np.append(arr, row['high'])
-            arr = np.append(arr, np.arange(row['open']-step, row['low'], -step))
-            arr = np.append(arr, row['low'])
-            arr = np.append(arr, row['close'])
-
-            i = 0
-#             利用timedelta对数据进行切分微分化,返回tick数据并储存到tick_bar里面
-            dt = parser.parse(str(row['datetime'])) - timedelta(minutes=5)
-            for item in arr:
-                ticks.append((dt+timedelta(seconds=0.1*i), item))
-                i += 1
-        tick_df = pd.DataFrame(ticks, columns=['datetime', 'price'])
-        tick_df.to_csv(tick_path, index=0)
+def get_ticks_for_backtesting():
+    ticks = []
+    for i in range(len(open)):
+        if open[i] < 30:
+            step = 0.01
+        elif open[i] < 60:
+            step = 0.03
+        elif open[i] < 90:
+            step = 0.05
+        else:
+            step = 0.1
+        #例如:np.arange(30.00, 30.11, 0.02)
+        #当step的步长大于0.01时,30.11则会不包含再tick数据里面,为让其包含在tick数据里面,需要 np.append(arr, row['high']),np.append(arr, row['low'])
+        arr = np.arange(open[i], high[i], step)
+        arr = np.append(arr, high[i])
+        arr = np.append(arr, np.arange(open[i]-step, low[i], -step))
+        arr = np.append(arr, low[i])
+        arr = np.append(arr, close[i])
+        j = 0
+    #利用timedelta对数据进行切分微分化,返回tick数据并储存到tick_bar里面
+        dt = parser.parse(str(datetime[i])) - timedelta(minutes=5)
+        for item in arr:
+            ticks.append((dt+timedelta(seconds=0.1*j), item))
+            j += 1
     return ticks
 
 class AstockTrading(object):
@@ -116,15 +92,15 @@ class AstockTrading(object):
 #             当当前订单的长度为0是,证明还没有开仓,则考虑达到设定的条件进行买入
         if 0 == len(self._current_orders):
 #         如果当前价格小于ma20*0.93则买入
-                if self._Close[0] < 0.93 * self._ma20:
-                    volume = int((100000/self._Close[0])/100)*100
+                if self._Close[0] < 0.98 * self._ma20:
+                    volume = int((float(capital)/self._Close[0])/100)*100
                     self.volume = volume
 #                当前价格为买一,为立即交,买入价格加0.01为卖一,可马上成交
                     self.buy(self._Close[0]+0.01,volume)
 #             当当前订单的长度为1时,证明已开仓,则考虑达到设定的条件进行卖出(设定的条件为价格小于ma20*1.07)   
         elif 1 == len(self._current_orders):
 #         如果当前价格大于ma20*1.07则卖出
-            if self._Close[0] > self._ma20*1.07:
+            if self._Close[0] > self._ma20*1.02:
                 key = list(self._current_orders.keys())[0]
 #             如果触发卖出条件且卖出日期不等于买进日期则卖出
                 if self._Dt[0].date() != self._current_orders[key]['open_datetime']:
@@ -175,9 +151,16 @@ class AstockTrading(object):
                     self.strategy()
 # 启动策略
 if __name__ == '__main__':
-    tick_path = 'D:\\代码\\爬虫项目\\spider_one_year_1\\量化交易\\300014_ticks.csv'
-    bar_path = 'D:\\代码\\爬虫项目\\spider_one_year_1\\量化交易\\300014_5m.csv'
-    ticks = get_ticks_for_backtesting(tick_path, bar_path)#传入参数
+    stock_number = input('请输入你要回测的股票代码(6位数字):')
+    capital = input('请输入你要投入的本金:')
+    data = ef.stock.get_quote_history(stock_number, klt='5').T
+    stock_name = data.values[0][0]
+    open = data.values[3]
+    high = data.values[5]
+    low = data.values[6]
+    close = data.values[4]
+    datetime = data.values[2]
+    ticks = get_ticks_for_backtesting()#传入参数
     ast = AstockTrading('ma')#启动AstockTrading,参数为('ma'),ma自定义
     ast.run_backtesting(ticks)#启动策略
     print(ast._history_orders)#打印历史订单信息
@@ -193,10 +176,18 @@ if __name__ == '__main__':
             profit_orders += 1#计算利润大于零的次数
         else:
             loss_orders += 1#计算利润小于零的次数
-    profit_late = profit_orders/len(orders)#计算胜率
-    loss_late = loss_orders/len(orders)#计算输的概率
-    print('胜的概率为:'+str(profit_late),'输的概率为:'+str(loss_late))
-    print('利润为:'+str(profit))
-    orders_df = pd.DataFrame(orders).T#转置数据让matplotlib处理
-    plt.bar(orders.keys(),orders_df.loc[:,'pnl'])
-    plt.show()#
+    if len(orders)==0:
+        print('行情没有触发策略')
+    else:
+        win_late = profit_orders/len(orders)#计算胜率
+        loss_late = loss_orders/len(orders)#计算输的概率
+        profit_late = profit/float(capital)
+        print('交易的股票为:',stock_name)
+        print('交易的笔数为:'+str(len(orders))+'笔')
+        print("胜率为:%.2f%%"%(win_late*100))
+        print("输率为:%.2f%%" % (loss_late * 100))
+        print('利润为:'+str(profit))
+        print("收益率为:%.2f%%" % (profit_late * 100))
+        orders_df = pd.DataFrame(orders).T#转置数据让matplotlib处理
+        plt.bar(orders.keys(),orders_df.loc[:,'pnl'])
+        plt.show()#
