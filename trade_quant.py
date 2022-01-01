@@ -8,6 +8,7 @@ import os
 import matplotlib.pyplot as plt
 import efinance as ef
 
+# 为均线提供tick数据
 def get_ticks_for_backtesting():
     ticks = []
     for i in range(len(open)):
@@ -152,9 +153,11 @@ class AstockTrading(object):
                     self.strategy()
 # 启动策略
 if __name__ == '__main__':
+    # 输入要回测的参数
     stock_number = input('请输入你要回测的股票代码(6位数字):')
     capital = input('请输入你要投入的本金:')
     print('*'*100)
+    # 获得股票的行情信息
     data = ef.stock.get_quote_history(stock_number, klt='5').T
     stock_name = data.values[0][0]
     open = data.values[3]
