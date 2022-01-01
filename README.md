@@ -24,5 +24,6 @@ git clone git@github.com:zqtz/trade_quant.git
 
 
 5,效果图
-![image](https://user-images.githubusercontent.com/61925624/147843055-b9a0a9fd-27dd-489f-a99c-62d3370bef7d.png)
-![image](https://user-images.githubusercontent.com/61925624/147843060-921ebca9-6320-4d60-a60e-1a5c8f0f9db8.png)
+![image](https://user-images.githubusercontent.com/61925624/147843284-d4d232b4-16a7-4963-bf53-e921f6772e6d.png)
+![image](https://user-images.githubusercontent.com/61925624/147843286-f89c6690-beaf-4afa-915c-25a408311174.png)
+
