@@ -14,6 +14,7 @@ pip install (对应要安装的第三方库)
 
 
 3,克隆代码
+
 git clone git@github.com:zqtz/trade_quant.git
 
 
@@ -25,10 +26,3 @@ git clone git@github.com:zqtz/trade_quant.git
 5,效果图
 ![image](https://user-images.githubusercontent.com/61925624/147843055-b9a0a9fd-27dd-489f-a99c-62d3370bef7d.png)
 ![image](https://user-images.githubusercontent.com/61925624/147843060-921ebca9-6320-4d60-a60e-1a5c8f0f9db8.png)
-
-
-
-
-
-
-
