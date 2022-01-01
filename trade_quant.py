@@ -1,4 +1,4 @@
-# 导入请求库,时间处理库,数据处理和画图的第三方库,文件处理的os库,财经数据efinance库
+# 导入请求库,时间处理库,数据处理和画图的第三方库,文件处理的os库
 import requests
 from datetime import time,datetime,timedelta
 import pandas as pd
@@ -8,9 +8,7 @@ import os
 import matplotlib.pyplot as plt
 import efinance as ef
 
-# 为生成均线提供ticks数据:
 def get_ticks_for_backtesting():
-#     储存tick数据
     ticks = []
     for i in range(len(open)):
         if open[i] < 30:
@@ -105,6 +103,7 @@ class AstockTrading(object):
             if self._Close[0] > self._ma20*1.02:
                 key = list(self._current_orders.keys())[0]
 #             如果触发卖出条件且卖出日期不等于买进日期则卖出
+                print('买卖的时间如下:')
                 if self._Dt[0].date() != self._current_orders[key]['open_datetime']:
                     self.sell(key,self._Close[0])
                     print('open datetime is: %s,close datetime is: %s.'% (self._history_orders[key]['open_datetime'],self._Dt[0].date()))
@@ -153,12 +152,10 @@ class AstockTrading(object):
                     self.strategy()
 # 启动策略
 if __name__ == '__main__':
-#     输入要回测的数据
     stock_number = input('请输入你要回测的股票代码(6位数字):')
     capital = input('请输入你要投入的本金:')
-#     获得股票的5分钟行情数据
+    print('*'*100)
     data = ef.stock.get_quote_history(stock_number, klt='5').T
-#     获得股票的各种参数
     stock_name = data.values[0][0]
     open = data.values[3]
     high = data.values[5]
@@ -168,9 +165,7 @@ if __name__ == '__main__':
     ticks = get_ticks_for_backtesting()#传入参数
     ast = AstockTrading('ma')#启动AstockTrading,参数为('ma'),ma自定义
     ast.run_backtesting(ticks)#启动策略
-    print(ast._history_orders)#打印历史订单信息
-    for order in ast._history_orders:#获取order的key值
-        print(ast._history_orders[order])#
+    # print(ast._history_orders)#打印历史订单信息
     profit_orders = 0
     loss_orders = 0
     profit = 0
@@ -187,12 +182,25 @@ if __name__ == '__main__':
         win_late = profit_orders/len(orders)#计算胜率
         loss_late = loss_orders/len(orders)#计算输的概率
         profit_late = profit/float(capital)
+        print('*'*100)
         print('交易的股票为:',stock_name)
+        print('*'*100)
+        print('交易详情如下:')
+        for order in ast._history_orders:  # 获取order的key值
+            print(ast._history_orders[order])  #
+        print('*'*100)
+        print('回测的时间为:',datetime[0],'至',datetime[-1])
+        print('*' * 100)
         print('交易的笔数为:'+str(len(orders))+'笔')
+        print('*' * 100)
         print("胜率为:%.2f%%"%(win_late*100))
+        print('*' * 100)
         print("输率为:%.2f%%" % (loss_late * 100))
+        print('*' * 100)
         print('利润为:'+str(round(profit,2)))
+        print('*' * 100)
         print("收益率为:%.2f%%" % (profit_late * 100))
+        print('*' * 100)
         orders_df = pd.DataFrame(orders).T#转置数据让matplotlib处理
         plt.bar(orders.keys(),orders_df.loc[:,'pnl'])
         plt.show()#
