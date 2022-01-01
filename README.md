@@ -20,7 +20,7 @@ git clone git@github.com:zqtz/trade_quant.git
 
 4,运行代码
 
-输入要回测的股票代码和要投入的资金
+输入回测的股票代码和投入的资金
 
 
 5,效果图
