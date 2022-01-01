@@ -1,4 +1,4 @@
-# 导入请求库,时间处理库,数据处理和画图的第三方库,文件处理的os库
+# 导入请求库,时间处理库,数据处理和画图的第三方库,文件处理的os库,财经数据efinance库
 import requests
 from datetime import time,datetime,timedelta
 import pandas as pd
@@ -8,7 +8,9 @@ import os
 import matplotlib.pyplot as plt
 import efinance as ef
 
+# 为生成均线提供ticks数据:
 def get_ticks_for_backtesting():
+#     储存tick数据
     ticks = []
     for i in range(len(open)):
         if open[i] < 30:
@@ -151,9 +153,12 @@ class AstockTrading(object):
                     self.strategy()
 # 启动策略
 if __name__ == '__main__':
+#     输入要回测的数据
     stock_number = input('请输入你要回测的股票代码(6位数字):')
     capital = input('请输入你要投入的本金:')
+#     获得股票的5分钟行情数据
     data = ef.stock.get_quote_history(stock_number, klt='5').T
+#     获得股票的各种参数
     stock_name = data.values[0][0]
     open = data.values[3]
     high = data.values[5]
@@ -186,7 +191,7 @@ if __name__ == '__main__':
         print('交易的笔数为:'+str(len(orders))+'笔')
         print("胜率为:%.2f%%"%(win_late*100))
         print("输率为:%.2f%%" % (loss_late * 100))
-        print('利润为:'+str(profit))
+        print('利润为:'+str(round(profit,2)))
         print("收益率为:%.2f%%" % (profit_late * 100))
         orders_df = pd.DataFrame(orders).T#转置数据让matplotlib处理
         plt.bar(orders.keys(),orders_df.loc[:,'pnl'])
