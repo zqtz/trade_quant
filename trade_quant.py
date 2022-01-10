@@ -167,7 +167,7 @@ class AstockTrading(object):
 if __name__ == '__main__':
     # 输入要回测的参数
     queue_list = Queue()
-    # 回测全部A股股票
+    # 回测全部A股
     stock_numbers = ef.stock.get_realtime_quotes().values.T[0]
     for stock_number in stock_numbers:
         # stock_number = input('请输入要回测的股票代码(6位数字):')
