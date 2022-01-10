@@ -7,6 +7,10 @@ from dateutil import parser
 import os
 import matplotlib.pyplot as plt
 import efinance as ef
+from pymongo import MongoClient
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Queue
+
 
 # 为均线提供tick数据
 def get_ticks_for_backtesting():
@@ -54,6 +58,7 @@ class AstockTrading(object):
         self._init = None
         self._open_price = None
         self._close_price = None
+        self.client = MongoClient(host='localhost',port=27017)
 
     def buy(self,price,volume):
 #         定义买入的函数
@@ -93,7 +98,7 @@ class AstockTrading(object):
 #             当当前订单的长度为0是,证明还没有开仓,则考虑达到设定的条件进行买入
         if 0 == len(self._current_orders):
 #         如果当前价格小于ma20*0.93则买入
-                if self._Close[0] < 0.98 * self._ma20:
+                if self._Close[0] < 0.9 * self._ma20:
                     volume = int((float(capital)/self._Close[0])/100)*100
                     self.volume = volume
 #                当前价格为买一,为立即交,买入价格加0.01为卖一,可马上成交
@@ -101,7 +106,7 @@ class AstockTrading(object):
 #             当当前订单的长度为1时,证明已开仓,则考虑达到设定的条件进行卖出(设定的条件为价格小于ma20*1.07)   
         elif 1 == len(self._current_orders):
 #         如果当前价格大于ma20*1.07则卖出
-            if self._Close[0] > self._ma20*1.02:
+            if self._Close[0] > self._ma20*1.05:
                 key = list(self._current_orders.keys())[0]
 #             如果触发卖出条件且卖出日期不等于买进日期则卖出
                 print('买卖的时间如下:')
@@ -142,68 +147,92 @@ class AstockTrading(object):
         for tick in ticks:
 #         对tick数据进行处理
             self.bar_generator_for_backtesting(tick)
-#     如果为初始化状态则运行策略
+    #     如果为初始化状态则运行策略
             if self._init:
                 self.strategy()
-#             否则进入else
+    #             否则进入else
             else:
-#         如果_open价格列表长度大于等于100进行策略
+    #         如果_open价格列表长度大于等于100进行策略
                 if len(self._Open) >= 100:
                     self._init = True
                     self.strategy()
+
+    def save_to_mongo(self,trade_data):
+        db = self.client['均线策略']
+        collections = db['交易数据']
+        collections.insert_one(trade_data)
+
+
 # 启动策略
 if __name__ == '__main__':
     # 输入要回测的参数
-    stock_number = input('请输入你要回测的股票代码(6位数字):')
-    capital = input('请输入你要投入的本金:')
-    print('*'*100)
-    # 获得股票的行情信息
-    data = ef.stock.get_quote_history(stock_number, klt='5').T
-    stock_name = data.values[0][0]
-    open = data.values[3]
-    high = data.values[5]
-    low = data.values[6]
-    close = data.values[4]
-    datetime = data.values[2]
-    ticks = get_ticks_for_backtesting()#传入参数
-    ast = AstockTrading('ma')#启动AstockTrading,参数为('ma'),ma自定义
-    ast.run_backtesting(ticks)#启动策略
-    # print(ast._history_orders)#打印历史订单信息
-    profit_orders = 0
-    loss_orders = 0
-    profit = 0
-    orders = ast._history_orders
-    for key in orders.keys():
-        profit += orders[key]['pnl']#获取总利润
-        if orders[key]['pnl'] >= 0:
-            profit_orders += 1#计算利润大于零的次数
+    queue_list = Queue()
+    # 回测全部A股股票
+    stock_numbers = ef.stock.get_realtime_quotes().values.T[0]
+    for stock_number in stock_numbers:
+        # stock_number = input('请输入要回测的股票代码(6位数字):')
+        print('股票代码为:'+stock_number)
+        capital = 100000
+        print('*'*100)
+        # 获得股票的行情信息
+        pool = ThreadPoolExecutor(max_workers=100)
+        data = ef.stock.get_quote_history(stock_number, klt='5').T
+        stock_name = data.values[0][0]
+        open = data.values[3]
+        high = data.values[5]
+        low = data.values[6]
+        close = data.values[4]
+        datetime = data.values[2]
+        ticks = get_ticks_for_backtesting()#传入参数
+        ast = AstockTrading('ma')# 启动AstockTrading,参数为('ma'),ma自定义
+        ast.run_backtesting(ticks)#启动策略
+        profit_orders = 0
+        loss_orders = 0
+        profit = 0
+        orders = ast._history_orders
+        for key in orders.keys():
+            profit += orders[key]['pnl']#获取总利润
+            if orders[key]['pnl'] >= 0:
+                profit_orders += 1#计算利润大于零的次数
+            else:
+                loss_orders += 1#计算利润小于零的次数
+        if len(orders)==0:
+            print('行情没有触发策略')
         else:
-            loss_orders += 1#计算利润小于零的次数
-    if len(orders)==0:
-        print('行情没有触发策略')
-    else:
-        win_late = profit_orders/len(orders)#计算胜率
-        loss_late = loss_orders/len(orders)#计算输的概率
-        profit_late = profit/float(capital)
-        print('*'*100)
-        print('交易的股票为:',stock_name)
-        print('*'*100)
-        print('交易详情如下:')
-        for order in ast._history_orders:  # 获取order的key值
-            print(ast._history_orders[order])  #
-        print('*'*100)
-        print('回测的时间为:',datetime[0],'至',datetime[-1])
-        print('*' * 100)
-        print('交易的笔数为:'+str(len(orders))+'笔')
-        print('*' * 100)
-        print("胜率为:%.2f%%"%(win_late*100))
-        print('*' * 100)
-        print("输率为:%.2f%%" % (loss_late * 100))
-        print('*' * 100)
-        print('利润为:'+str(round(profit,2)))
-        print('*' * 100)
-        print("收益率为:%.2f%%" % (profit_late * 100))
-        print('*' * 100)
-        orders_df = pd.DataFrame(orders).T#转置数据让matplotlib处理
-        plt.bar(orders.keys(),orders_df.loc[:,'pnl'])
-        plt.show()#
+            win_late = profit_orders/len(orders)#计算胜率
+            loss_late = loss_orders/len(orders)#计算输的概率
+            profit_late = profit/float(capital)
+            print('*'*100)
+            print('交易的股票为:',stock_name)
+            print('*'*100)
+            print('交易详情如下:')
+            for order in ast._history_orders:  # 获取order的key值
+                print(ast._history_orders[order])
+                teade_data = {
+                    'stock_name':stock_name,
+                    'stock_number':stock_number,
+                    'open_time':ast._history_orders[order]['open_datetime'],
+                    'open_price':ast._history_orders[order]['open_price'],
+                    'close_time': ast._history_orders[order]['close_datetime'],
+                    'close_price': ast._history_orders[order]['close_price'],
+                    'pnl':ast._history_orders[order]['pnl'],
+                    'volume':ast._history_orders[order]['volume']
+                }
+                # 交易数据 保存到mongodb
+                ast.save_to_mongo(teade_data)
+            print('*'*100)
+            print('回测的时间为:',datetime[0],'至',datetime[-1])
+            print('*' * 100)
+            print('交易的笔数为:'+str(len(orders))+'笔')
+            print('*' * 100)
+            print("胜率为:%.2f%%"%(win_late*100))
+            print('*' * 100)
+            print("输率为:%.2f%%" % (loss_late * 100))
+            print('*' * 100)
+            print('利润为:'+str(round(profit,2)))
+            print('*' * 100)
+            print("收益率为:%.2f%%" % (profit_late * 100))
+            print('*' * 100)
+            # orders_df = pd.DataFrame(orders).T#转置数据让matplotlib处理
+            # plt.bar(orders.keys(),orders_df.loc[:,'pnl'])
+            # plt.show()
