@@ -4,12 +4,9 @@ from datetime import time,datetime,timedelta
 import pandas as pd
 import numpy as np
 from dateutil import parser
-import os
 import matplotlib.pyplot as plt
 import efinance as ef
 from pymongo import MongoClient
-from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Queue
 
 
 # 为均线提供tick数据
