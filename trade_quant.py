@@ -107,7 +107,7 @@ class AstockTrading(object):
                 key = list(self._current_orders.keys())[0]
 #             如果触发卖出条件且卖出日期不等于买进日期则卖出
                 print('买卖的时间如下:')
-                if self._Dt[0].date() != self._current_orders[key]['open_datetime']:
+                if self._Dt[0].date() != self._current_orders[key]['open_datetime'].date():
                     self.sell(key,self._Close[0])
                     print('open datetime is: %s,close datetime is: %s.'% (self._history_orders[key]['open_datetime'],self._Dt[0].date()))
 #                 如果触发卖出条件但卖出日期等于买进日期则打印T+0限制
