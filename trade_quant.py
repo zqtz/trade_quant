@@ -163,7 +163,6 @@ class AstockTrading(object):
 # 启动策略
 if __name__ == '__main__':
     # 输入要回测的参数
-    queue_list = Queue()
     # 回测全部A股
     stock_numbers = ef.stock.get_realtime_quotes().values.T[0]
     for stock_number in stock_numbers:
@@ -172,7 +171,6 @@ if __name__ == '__main__':
         capital = 100000
         print('*'*100)
         # 获得股票的行情信息
-        pool = ThreadPoolExecutor(max_workers=100)
         data = ef.stock.get_quote_history(stock_number, klt='5').T
         stock_name = data.values[0][0]
         open = data.values[3]
