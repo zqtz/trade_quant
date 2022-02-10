@@ -179,7 +179,7 @@ if __name__ == '__main__':
         close = data.values[4]
         datetime = data.values[2]
         ticks = get_ticks_for_backtesting()#传入参数
-        ast = AstockTrading('ma')# 启动AstockTrading,参数为('ma'),ma自定义
+        ast = AstockTrading('jx')# 启动AstockTrading,参数为('jx'),ma自定义
         ast.run_backtesting(ticks)#启动策略
         profit_orders = 0
         loss_orders = 0
